@@ -1,4 +1,4 @@
--- modules/ui/main.lua (VERSÃO COMPLETA)
+-- modules/ui/main.lua (COM INTERRUPTORES E SEÇÕES AJUSTADAS)
 local ui = {}
 
 local function criarUI(config, services)
@@ -8,7 +8,7 @@ local function criarUI(config, services)
     local colorNeon = config.UI.Colors.Neon
     local colorLine = config.UI.Colors.Line
 
-    -- Função para criar seções
+    -- Função para criar seções COM INTERRUPTOR
     local function criarSecao(parent, titulo, posX)
         local section = Instance.new("Frame")
         section.Size = UDim2.new(0, 190, 0, 320)
@@ -26,17 +26,57 @@ local function criarUI(config, services)
         stroke.Color = colorLine
         stroke.Parent = section
         
-        -- Título da seção
+        -- Frame do título (para organizar título + interruptor)
+        local titleFrame = Instance.new("Frame")
+        titleFrame.Size = UDim2.new(1, -20, 0, 35)
+        titleFrame.Position = UDim2.new(0, 10, 0, 0)
+        titleFrame.BackgroundTransparency = 1
+        titleFrame.Parent = section
+        
+        -- Título da seção (esquerda)
         local title = Instance.new("TextLabel")
         title.Text = titulo
-        title.Size = UDim2.new(1, -20, 0, 35)
-        title.Position = UDim2.new(0, 10, 0, 0)
+        title.Size = UDim2.new(0, 100, 1, 0)
         title.TextColor3 = colorNeon
         title.Font = Enum.Font.GothamBold
         title.TextSize = 14
         title.TextXAlignment = Enum.TextXAlignment.Left
         title.BackgroundTransparency = 1
-        title.Parent = section
+        title.Parent = titleFrame
+        
+        -- INTERRUPTOR (toggle) - direita do título
+        local toggleBg = Instance.new("TextButton")
+        toggleBg.Name = "Toggle_" .. titulo
+        toggleBg.Size = UDim2.new(0, 36, 0, 18)
+        toggleBg.Position = UDim2.new(1, -38, 0.5, -9)
+        toggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        toggleBg.Text = ""
+        toggleBg.Parent = titleFrame
+        
+        -- Cantos arredondados no interruptor
+        local toggleCorner = Instance.new("UICorner")
+        toggleCorner.CornerRadius = UDim.new(1, 0)
+        toggleCorner.Parent = toggleBg
+        
+        -- Bolinha do interruptor
+        local toggleKnob = Instance.new("Frame")
+        toggleKnob.Size = UDim2.new(0, 14, 0, 14)
+        toggleKnob.Position = UDim2.new(0, 2, 0.5, -7)
+        toggleKnob.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        toggleKnob.Parent = toggleBg
+        
+        local knobCorner = Instance.new("UICorner")
+        knobCorner.CornerRadius = UDim.new(1, 0)
+        knobCorner.Parent = toggleKnob
+        
+        -- Estado do interruptor
+        local toggleState = false
+        toggleBg.MouseButton1Click:Connect(function()
+            toggleState = not toggleState
+            -- Animar bolinha
+            toggleKnob.Position = toggleState and UDim2.new(1, -16, 0.5, -7) or UDim2.new(0, 2, 0.5, -7)
+            toggleBg.BackgroundColor3 = toggleState and colorNeon or Color3.fromRGB(60, 60, 60)
+        end)
         
         -- Linha separadora do título
         local separator = Instance.new("Frame")
@@ -84,6 +124,13 @@ local function criarUI(config, services)
         local checkCorner = Instance.new("UICorner")
         checkCorner.CornerRadius = UDim.new(0, 4)
         checkCorner.Parent = checkbox
+        
+        -- Funcionalidade do checkbox
+        local checkState = false
+        checkbox.MouseButton1Click:Connect(function()
+            checkState = not checkState
+            checkbox.BackgroundColor3 = checkState and colorNeon or Color3.fromRGB(50, 50, 50)
+        end)
         
         return checkbox
     end
@@ -141,7 +188,7 @@ local function criarUI(config, services)
         
         local label = Instance.new("TextLabel")
         label.Text = texto
-        label.Size = UDim2.new(0, 80, 1, 0)
+        label.Size = UDim2.new(0, 70, 1, 0)
         label.TextColor3 = Color3.fromRGB(200, 200, 200)
         label.Font = Enum.Font.Gotham
         label.TextSize = 12
@@ -162,6 +209,13 @@ local function criarUI(config, services)
         local selectorCorner = Instance.new("UICorner")
         selectorCorner.CornerRadius = UDim.new(0, 4)
         selectorCorner.Parent = selector
+        
+        -- Funcionalidade do seletor (ciclo)
+        local index = 1
+        selector.MouseButton1Click:Connect(function()
+            index = index % #opcoes + 1
+            selector.Text = opcoes[index]
+        end)
         
         return selector
     end
@@ -323,7 +377,7 @@ local function criarUI(config, services)
         
         criarSelector(aimContainer, "Hitbox", yPos, {"Head", "Torso", "Random"})
         
-        -- SEÇÃO 2: TRIGGERBOT (centro)
+        -- SEÇÃO 2: TRIGGERBOT (centro) - AJUSTADO PARA 230
         local triggerContainer = criarSecao(combatPage, "TRIGGERBOT", 230)
         yPos = 0
         
@@ -336,7 +390,7 @@ local function criarUI(config, services)
         
         criarSelector(triggerContainer, "Mode", yPos, {"Instant", "Delay", "Hold"})
         
-        -- SEÇÃO 3: EXTRA (direita)
+        -- SEÇÃO 3: EXTRA (direita) - AJUSTADO PARA 440 (DENTRO DA GUI)
         local extraContainer = criarSecao(combatPage, "EXTRA", 440)
         yPos = 0
         
@@ -386,7 +440,7 @@ local function criarUI(config, services)
         close.Parent = mainFrame
         
         local closeCorner = Instance.new("UICorner")
-        closeCorner.CornerRadius = UDim.new(1, 0)  -- 1 = 100% redondo
+        closeCorner.CornerRadius = UDim.new(1, 0)
         closeCorner.Parent = close
         
         -- BOTÃO MINIMIZAR (amarelo, redondo)
@@ -398,7 +452,7 @@ local function criarUI(config, services)
         mini.Parent = mainFrame
         
         local miniCorner = Instance.new("UICorner")
-        miniCorner.CornerRadius = UDim.new(1, 0)  -- 1 = 100% redondo
+        miniCorner.CornerRadius = UDim.new(1, 0)
         miniCorner.Parent = mini
         
         close.MouseButton1Click:Connect(function()
@@ -434,8 +488,8 @@ local function criarUI(config, services)
         self:CreateWindowControls()
         self:ShowPage("COMBAT")
         
-        print("✅ UI COMPLETA do Malignant inicializada!")
-        print("📌 3 seções: Aimbot, Triggerbot, Extra")
+        print("✅ UI COMPLETA COM INTERRUPTORES!")
+        print("📌 Aimbot | Triggerbot | Extra (todas dentro da GUI)")
         print("▶️ CTRL para abrir/fechar")
     end
 
