@@ -1,4 +1,4 @@
--- modules/ui/main.lua (COM INTERRUPTORES E SEÇÕES AJUSTADAS)
+-- modules/ui/main.lua (VERSÃO ULTRA COMPLETA)
 local ui = {}
 
 local function criarUI(config, services)
@@ -11,8 +11,8 @@ local function criarUI(config, services)
     -- Função para criar seções COM INTERRUPTOR
     local function criarSecao(parent, titulo, posX)
         local section = Instance.new("Frame")
-        section.Size = UDim2.new(0, 190, 0, 320)
-        section.Position = UDim2.new(0, posX, 0.5, -160)
+        section.Size = UDim2.new(0, 200, 0, 380)  -- Aumentei altura pra caber mais coisas
+        section.Position = UDim2.new(0, posX, 0.5, -190)
         section.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
         section.Parent = parent
         
@@ -78,7 +78,7 @@ local function criarUI(config, services)
             toggleBg.BackgroundColor3 = toggleState and colorNeon or Color3.fromRGB(60, 60, 60)
         end)
         
-        -- Linha separadora do título
+        -- Linha separadora do título (DENTRO da seção)
         local separator = Instance.new("Frame")
         separator.Size = UDim2.new(1, -20, 0, 1)
         separator.Position = UDim2.new(0, 10, 0, 35)
@@ -96,8 +96,8 @@ local function criarUI(config, services)
         return container
     end
     
-    -- Função para criar checkbox
-    local function criarCheckbox(parent, texto, yPos)
+    -- Função para criar checkbox com ícone de ✓ (não emoji)
+    local function criarCheckbox(parent, texto, yPos, callback)
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 0, 25)
         frame.Position = UDim2.new(0, 0, 0, yPos)
@@ -118,25 +118,83 @@ local function criarUI(config, services)
         checkbox.Size = UDim2.new(0, 18, 0, 18)
         checkbox.Position = UDim2.new(1, -20, 0.5, -9)
         checkbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        checkbox.Text = ""
+        checkbox.Text = ""  -- Começa vazio
+        checkbox.TextColor3 = colorNeon
+        checkbox.Font = Enum.Font.GothamBold
+        checkbox.TextSize = 14
         checkbox.Parent = frame
         
         local checkCorner = Instance.new("UICorner")
         checkCorner.CornerRadius = UDim.new(0, 4)
         checkCorner.Parent = checkbox
         
-        -- Funcionalidade do checkbox
+        -- Funcionalidade do checkbox com ✓
         local checkState = false
         checkbox.MouseButton1Click:Connect(function()
             checkState = not checkState
+            checkbox.Text = checkState and "✓" or ""
             checkbox.BackgroundColor3 = checkState and colorNeon or Color3.fromRGB(50, 50, 50)
+            if callback then callback(checkState) end
         end)
         
         return checkbox
     end
     
-    -- Função para criar slider
-    local function criarSlider(parent, texto, yPos, min, max, padrao)
+    -- Função para criar seletor de tecla (Hotkey)
+    local function criarHotkeySelector(parent, texto, yPos, teclaPadrao)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, 0, 0, 25)
+        frame.Position = UDim2.new(0, 0, 0, yPos)
+        frame.BackgroundTransparency = 1
+        frame.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Text = texto
+        label.Size = UDim2.new(0, 70, 1, 0)
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Parent = frame
+        
+        local hotkeyBtn = Instance.new("TextButton")
+        hotkeyBtn.Size = UDim2.new(0, 70, 0, 22)
+        hotkeyBtn.Position = UDim2.new(1, -72, 0.5, -11)
+        hotkeyBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        hotkeyBtn.Text = teclaPadrao
+        hotkeyBtn.TextColor3 = colorNeon
+        hotkeyBtn.Font = Enum.Font.GothamBold
+        hotkeyBtn.TextSize = 11
+        hotkeyBtn.Parent = frame
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = hotkeyBtn
+        
+        -- Modo de seleção de tecla
+        local selecionando = false
+        hotkeyBtn.MouseButton1Click:Connect(function()
+            selecionando = true
+            hotkeyBtn.Text = "..."
+            hotkeyBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        end)
+        
+        -- Detectar tecla pressionada
+        services.UserInputService.InputBegan:Connect(function(input, processed)
+            if selecionando and not processed and input.KeyCode ~= Enum.KeyCode.Unknown then
+                selecionando = false
+                local tecla = input.KeyCode.Name
+                hotkeyBtn.Text = tecla
+                hotkeyBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            end
+        end)
+        
+        return hotkeyBtn
+    end
+    
+    -- Função para criar slider com valor mostrado
+    local function criarSlider(parent, texto, yPos, min, max, padrao, sufixo)
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 0, 40)
         frame.Position = UDim2.new(0, 0, 0, yPos)
@@ -144,7 +202,7 @@ local function criarUI(config, services)
         frame.Parent = parent
         
         local label = Instance.new("TextLabel")
-        label.Text = texto .. ": " .. padrao
+        label.Text = texto .. ": " .. padrao .. (sufixo or "")
         label.Size = UDim2.new(1, 0, 0, 15)
         label.TextColor3 = Color3.fromRGB(160, 160, 160)
         label.Font = Enum.Font.Gotham
@@ -175,11 +233,34 @@ local function criarUI(config, services)
         knobCorner.CornerRadius = UDim.new(1, 0)
         knobCorner.Parent = knob
         
+        -- Funcionalidade do slider
+        local dragging = false
+        sliderBg.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+            end
+        end)
+        
+        services.UserInputService.InputChanged:Connect(function(input)
+            if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local pos = math.clamp((input.Position.X - sliderBg.AbsolutePosition.X) / sliderBg.AbsoluteSize.X, 0, 1)
+                local valor = math.floor(min + (max - min) * pos)
+                fill.Size = UDim2.new(pos, 0, 1, 0)
+                label.Text = texto .. ": " .. valor .. (sufixo or "")
+            end
+        end)
+        
+        services.UserInputService.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
         return fill
     end
     
     -- Função para criar seletor
-    local function criarSelector(parent, texto, yPos, opcoes)
+    local function criarSelector(parent, texto, yPos, opcoes, callback)
         local frame = Instance.new("Frame")
         frame.Size = UDim2.new(1, 0, 0, 25)
         frame.Position = UDim2.new(0, 0, 0, yPos)
@@ -215,9 +296,60 @@ local function criarUI(config, services)
         selector.MouseButton1Click:Connect(function()
             index = index % #opcoes + 1
             selector.Text = opcoes[index]
+            if callback then callback(opcoes[index]) end
         end)
         
         return selector
+    end
+    
+    -- Função para criar botão de selecionar jogador
+    local function criarPlayerSelector(parent, texto, yPos)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, 0, 0, 30)
+        frame.Position = UDim2.new(0, 0, 0, yPos)
+        frame.BackgroundTransparency = 1
+        frame.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Text = texto
+        label.Size = UDim2.new(0, 70, 1, 0)
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Parent = frame
+        
+        local selectBtn = Instance.new("TextButton")
+        selectBtn.Size = UDim2.new(0, 100, 0, 24)
+        selectBtn.Position = UDim2.new(1, -102, 0.5, -12)
+        selectBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        selectBtn.Text = "Todos"
+        selectBtn.TextColor3 = colorNeon
+        selectBtn.Font = Enum.Font.GothamBold
+        selectBtn.TextSize = 11
+        selectBtn.Parent = frame
+        
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        btnCorner.Parent = selectBtn
+        
+        -- Criar dropdown de jogadores (simplificado)
+        selectBtn.MouseButton1Click:Connect(function()
+            -- Aqui você implementaria a lista de jogadores
+            -- Por enquanto só alterna entre modos
+            local modos = {"Todos", "Inimigos", "Aliados", "Específico"}
+            local atual = selectBtn.Text
+            for i, modo in ipairs(modos) do
+                if modo == atual then
+                    local proximo = modos[i % #modos + 1]
+                    selectBtn.Text = proximo
+                    break
+                end
+            end
+        end)
+        
+        return selectBtn
     end
 
     function ui:Cleanup()
@@ -284,9 +416,17 @@ local function criarUI(config, services)
         title.TextSize = 20
         title.Parent = sideMenu
         
+        -- LINHA DIVISÓRIA DO TÍTULO DO MENU
+        local titleSeparator = Instance.new("Frame")
+        titleSeparator.Size = UDim2.new(1, -20, 0, 1)
+        titleSeparator.Position = UDim2.new(0, 10, 0, 45)
+        titleSeparator.BackgroundColor3 = colorLine
+        titleSeparator.BorderSizePixel = 0
+        titleSeparator.Parent = sideMenu
+        
         local btnContainer = Instance.new("Frame")
-        btnContainer.Size = UDim2.new(1, 0, 1, -50)
-        btnContainer.Position = UDim2.new(0, 0, 0, 50)
+        btnContainer.Size = UDim2.new(1, 0, 1, -60)
+        btnContainer.Position = UDim2.new(0, 0, 0, 55)
         btnContainer.BackgroundTransparency = 1
         btnContainer.Parent = sideMenu
         
@@ -363,46 +503,63 @@ local function criarUI(config, services)
         combatPage.Visible = true
         combatPage.Parent = contentArea
         
-        -- SEÇÃO 1: AIMBOT (esquerda)
-        local aimContainer = criarSecao(combatPage, "AIMBOT", 20)
+        -- SEÇÃO 1: AIMBOT (esquerda) - COM TODOS OS NOVOS ELEMENTOS
+        local aimContainer = criarSecao(combatPage, "AIMBOT", 10)
         local yPos = 0
         
-        criarCheckbox(aimContainer, "Enabled", yPos); yPos = yPos + 25
+        -- Hotkey selector
+        criarHotkeySelector(aimContainer, "Hotkey", yPos, "X"); yPos = yPos + 30
+        
+        -- Player selector
+        criarPlayerSelector(aimContainer, "Target", yPos); yPos = yPos + 35
+        
+        -- Checkboxes básicos
         criarCheckbox(aimContainer, "Team Check", yPos); yPos = yPos + 25
         criarCheckbox(aimContainer, "Wall Check", yPos); yPos = yPos + 25
-        criarCheckbox(aimContainer, "Visible Check", yPos); yPos = yPos + 30
+        criarCheckbox(aimContainer, "Visible Check", yPos); yPos = yPos + 25
         
-        criarSlider(aimContainer, "FOV Radius", yPos, 0, 500, 100); yPos = yPos + 45
-        criarSlider(aimContainer, "Smoothness", yPos, 1, 20, 5); yPos = yPos + 45
+        -- FOV Circle checkbox
+        criarCheckbox(aimContainer, "FOV Circle", yPos); yPos = yPos + 30
         
-        criarSelector(aimContainer, "Hitbox", yPos, {"Head", "Torso", "Random"})
+        -- Sliders
+        criarSlider(aimContainer, "FOV Radius", yPos, 0, 500, 100, "px"); yPos = yPos + 45
+        criarSlider(aimContainer, "Smooth", yPos, 1, 20, 5, ""); yPos = yPos + 45
+        criarSlider(aimContainer, "Curve", yPos, 0, 100, 0, "%"); yPos = yPos + 45
+        criarSlider(aimContainer, "Aim Distance", yPos, 0, 5000, 1000, "m"); yPos = yPos + 45
         
-        -- SEÇÃO 2: TRIGGERBOT (centro) - AJUSTADO PARA 230
-        local triggerContainer = criarSecao(combatPage, "TRIGGERBOT", 230)
+        -- Seletores
+        criarSelector(aimContainer, "Hitbox", yPos, {"Head", "Torso", "Random"}); yPos = yPos + 30
+        criarSelector(aimContainer, "Mode", yPos, {"Closest", "Lowest HP", "Crosshair"})
+        
+        -- SEÇÃO 2: TRIGGERBOT (centro) - AJUSTADO PARA 220
+        local triggerContainer = criarSecao(combatPage, "TRIGGERBOT", 220)
         yPos = 0
         
+        criarHotkeySelector(triggerContainer, "Hotkey", yPos, "C"); yPos = yPos + 30
         criarCheckbox(triggerContainer, "Enabled", yPos); yPos = yPos + 25
         criarCheckbox(triggerContainer, "On Sight", yPos); yPos = yPos + 25
         criarCheckbox(triggerContainer, "On Crosshair", yPos); yPos = yPos + 25
         yPos = yPos + 5
         
-        criarSlider(triggerContainer, "Delay (ms)", yPos, 0, 500, 50); yPos = yPos + 45
+        criarSlider(triggerContainer, "Delay", yPos, 0, 500, 50, "ms"); yPos = yPos + 45
         
-        criarSelector(triggerContainer, "Mode", yPos, {"Instant", "Delay", "Hold"})
+        criarSelector(triggerContainer, "Mode", yPos, {"Instant", "Delay", "Hold"}); yPos = yPos + 30
+        criarSelector(triggerContainer, "Hitbox", yPos, {"Head", "Torso", "Random"})
         
-        -- SEÇÃO 3: EXTRA (direita) - AJUSTADO PARA 440 (DENTRO DA GUI)
-        local extraContainer = criarSecao(combatPage, "EXTRA", 440)
+        -- SEÇÃO 3: EXTRA (direita) - AJUSTADO PARA 430 (DENTRO DA GUI)
+        local extraContainer = criarSecao(combatPage, "EXTRA", 430)
         yPos = 0
         
         criarCheckbox(extraContainer, "Auto Prediction", yPos); yPos = yPos + 25
         criarCheckbox(extraContainer, "Dynamic FOV", yPos); yPos = yPos + 25
-        criarCheckbox(extraContainer, "Show FOV Circle", yPos); yPos = yPos + 25
         criarCheckbox(extraContainer, "Auto Shoot", yPos); yPos = yPos + 25
+        criarCheckbox(extraContainer, "Auto Wallbang", yPos); yPos = yPos + 25
         yPos = yPos + 5
         
-        criarSlider(extraContainer, "Max Distance", yPos, 100, 5000, 1000); yPos = yPos + 45
+        criarSlider(extraContainer, "Prediction", yPos, 0, 100, 50, "%"); yPos = yPos + 45
+        criarSlider(extraContainer, "Max Distance", yPos, 100, 5000, 1000, "m"); yPos = yPos + 45
         
-        criarSelector(extraContainer, "Target Mode", yPos, {"Closest", "Lowest HP", "Crosshair"})
+        criarSelector(extraContainer, "Priority", yPos, {"Health", "Distance", "Threat"})
         
         -- OUTRAS PÁGINAS
         local otherPages = {"VISUALS", "MOVEMENT", "MISC"}
@@ -488,8 +645,10 @@ local function criarUI(config, services)
         self:CreateWindowControls()
         self:ShowPage("COMBAT")
         
-        print("✅ UI COMPLETA COM INTERRUPTORES!")
-        print("📌 Aimbot | Triggerbot | Extra (todas dentro da GUI)")
+        print("✅ UI ULTRA COMPLETA DO MALIGNANT!")
+        print("📌 Aimbot (10) | Triggerbot (220) | Extra (430) - TODAS DENTRO")
+        print("📌 Ícones de ✓ nos checkboxes")
+        print("📌 Divisórias no título e categorias")
         print("▶️ CTRL para abrir/fechar")
     end
 
