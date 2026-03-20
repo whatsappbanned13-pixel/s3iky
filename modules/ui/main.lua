@@ -1,13 +1,167 @@
--- modules/ui/main.lua (VERSÃO PARA LOADSTRING - NÃO USA REQUIRE)
+-- modules/ui/main.lua (VERSÃO COM 3 SEÇÕES NO COMBAT)
 local ui = {}
 
--- Recebe as dependências por parâmetro em vez de require
 local function criarUI(config, services)
     local screenGui
     local mainFrame
     local pages = {}
     local colorNeon = config.UI.Colors.Neon
     local colorLine = config.UI.Colors.Line
+
+    -- Função auxiliar para criar seções
+    local function criarSecao(parent, titulo, posX)
+        local section = Instance.new("Frame")
+        section.Size = UDim2.new(0, 190, 0, 300)
+        section.Position = UDim2.new(0, posX, 0.5, -150)
+        section.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
+        section.Parent = parent
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 10)
+        corner.Parent = section
+        
+        local stroke = Instance.new("UIStroke")
+        stroke.Color = colorLine
+        stroke.Parent = section
+        
+        local title = Instance.new("TextLabel")
+        title.Text = titulo
+        title.Size = UDim2.new(1, -20, 0, 30)
+        title.Position = UDim2.new(0, 10, 0, 5)
+        title.TextColor3 = colorNeon
+        title.Font = Enum.Font.GothamBold
+        title.TextSize = 14
+        title.TextXAlignment = Enum.TextXAlignment.Left
+        title.BackgroundTransparency = 1
+        title.Parent = section
+        
+        local separator = Instance.new("Frame")
+        separator.Size = UDim2.new(1, -20, 0, 1)
+        separator.Position = UDim2.new(0, 10, 0, 35)
+        separator.BackgroundColor3 = colorLine
+        separator.BorderSizePixel = 0
+        separator.Parent = section
+        
+        return section
+    end
+    
+    -- Função para criar checkbox
+    local function criarCheckbox(parent, texto, yPos)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, -20, 0, 25)
+        frame.Position = UDim2.new(0, 10, 0, yPos)
+        frame.BackgroundTransparency = 1
+        frame.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Text = texto
+        label.Size = UDim2.new(1, -25, 1, 0)
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Parent = frame
+        
+        local checkbox = Instance.new("TextButton")
+        checkbox.Size = UDim2.new(0, 18, 0, 18)
+        checkbox.Position = UDim2.new(1, -20, 0.5, -9)
+        checkbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        checkbox.Text = ""
+        checkbox.Parent = frame
+        
+        local checkCorner = Instance.new("UICorner")
+        checkCorner.CornerRadius = UDim.new(0, 4)
+        checkCorner.Parent = checkbox
+        
+        -- Efeito de hover
+        checkbox.MouseEnter:Connect(function()
+            checkbox.BackgroundColor3 = Color3.fromRGB(70, 70, 70)
+        end)
+        checkbox.MouseLeave:Connect(function()
+            checkbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+        end)
+        
+        return checkbox
+    end
+    
+    -- Função para criar slider
+    local function criarSlider(parent, texto, yPos, min, max, padrao)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, -20, 0, 40)
+        frame.Position = UDim2.new(0, 10, 0, yPos)
+        frame.BackgroundTransparency = 1
+        frame.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Text = texto .. ": " .. padrao
+        label.Size = UDim2.new(1, 0, 0, 15)
+        label.TextColor3 = Color3.fromRGB(160, 160, 160)
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 11
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Parent = frame
+        
+        local sliderBg = Instance.new("Frame")
+        sliderBg.Size = UDim2.new(1, 0, 0, 4)
+        sliderBg.Position = UDim2.new(0, 0, 0, 22)
+        sliderBg.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        sliderBg.Parent = frame
+        
+        local fill = Instance.new("Frame")
+        fill.Size = UDim2.new((padrao-min)/(max-min), 0, 1, 0)
+        fill.BackgroundColor3 = colorNeon
+        fill.BorderSizePixel = 0
+        fill.Parent = sliderBg
+        
+        local knob = Instance.new("Frame")
+        knob.Size = UDim2.new(0, 10, 0, 10)
+        knob.Position = UDim2.new(1, -5, 0.5, -5)
+        knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        knob.Parent = fill
+        
+        local knobCorner = Instance.new("UICorner")
+        knobCorner.CornerRadius = UDim.new(1, 0)
+        knobCorner.Parent = knob
+        
+        return fill
+    end
+    
+    -- Função para criar seletor
+    local function criarSelector(parent, texto, yPos, opcoes)
+        local frame = Instance.new("Frame")
+        frame.Size = UDim2.new(1, -20, 0, 25)
+        frame.Position = UDim2.new(0, 10, 0, yPos)
+        frame.BackgroundTransparency = 1
+        frame.Parent = parent
+        
+        local label = Instance.new("TextLabel")
+        label.Text = texto
+        label.Size = UDim2.new(0, 80, 1, 0)
+        label.TextColor3 = Color3.fromRGB(200, 200, 200)
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 12
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.BackgroundTransparency = 1
+        label.Parent = frame
+        
+        local selector = Instance.new("TextButton")
+        selector.Size = UDim2.new(0, 70, 0, 20)
+        selector.Position = UDim2.new(1, -72, 0.5, -10)
+        selector.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+        selector.Text = opcoes[1]
+        selector.TextColor3 = colorNeon
+        selector.Font = Enum.Font.GothamBold
+        selector.TextSize = 11
+        selector.Parent = frame
+        
+        local selectorCorner = Instance.new("UICorner")
+        selectorCorner.CornerRadius = UDim.new(0, 4)
+        selectorCorner.Parent = selector
+        
+        return selector
+    end
 
     function ui:Cleanup()
         local playerGui = services.Players.LocalPlayer:FindFirstChild("PlayerGui")
@@ -125,7 +279,7 @@ local function criarUI(config, services)
         contentArea.BackgroundTransparency = 1
         contentArea.Parent = mainFrame
         
-        -- PÁGINA COMBAT COM CONTEÚDO
+        -- ========== PÁGINA COMBAT COM 3 SEÇÕES ==========
         local combatPage = Instance.new("Frame")
         combatPage.Name = "COMBAT_Page"
         combatPage.Size = UDim2.new(1, 0, 1, -45)
@@ -134,68 +288,49 @@ local function criarUI(config, services)
         combatPage.Visible = true
         combatPage.Parent = contentArea
         
-        -- SEÇÃO AIMBOT
-        local section = Instance.new("Frame")
-        section.Size = UDim2.new(0, 190, 0, 200)
-        section.Position = UDim2.new(0.5, -95, 0.5, -100)
-        section.BackgroundColor3 = Color3.fromRGB(32, 32, 32)
-        section.Parent = combatPage
+        -- SEÇÃO 1: AIMBOT (esquerda)
+        local aimSection = criarSecao(combatPage, "AIMBOT", 20)
         
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 10)
-        corner.Parent = section
+        -- Elementos do Aimbot
+        local yPos = 45
+        criarCheckbox(aimSection, "Enabled", yPos); yPos = yPos + 25
+        criarCheckbox(aimSection, "Team Check", yPos); yPos = yPos + 25
+        criarCheckbox(aimSection, "Wall Check", yPos); yPos = yPos + 25
+        criarCheckbox(aimSection, "Visible Check", yPos); yPos = yPos + 30
         
-        local stroke = Instance.new("UIStroke")
-        stroke.Color = colorLine
-        stroke.Parent = section
+        local fovSlider = criarSlider(aimSection, "FOV Radius", yPos, 0, 500, 100); yPos = yPos + 45
+        local smoothSlider = criarSlider(aimSection, "Smoothness", yPos, 1, 20, 5); yPos = yPos + 45
         
-        local title = Instance.new("TextLabel")
-        title.Text = "AIMBOT"
-        title.Size = UDim2.new(1, -20, 0, 30)
-        title.Position = UDim2.new(0, 10, 0, 5)
-        title.TextColor3 = colorNeon
-        title.Font = Enum.Font.GothamBold
-        title.TextSize = 12
-        title.TextXAlignment = Enum.TextXAlignment.Left
-        title.BackgroundTransparency = 1
-        title.Parent = section
+        criarSelector(aimSection, "Hitbox", yPos, {"Head", "Torso", "Random"})
         
-        local separator = Instance.new("Frame")
-        separator.Size = UDim2.new(1, -20, 0, 1)
-        separator.Position = UDim2.new(0, 10, 0, 35)
-        separator.BackgroundColor3 = colorLine
-        separator.BorderSizePixel = 0
-        separator.Parent = section
+        -- SEÇÃO 2: TRIGGERBOT (centro)
+        local triggerSection = criarSecao(combatPage, "TRIGGERBOT", 220)
+        yPos = 45
         
-        -- CHECKBOX EXEMPLO
-        local checkboxFrame = Instance.new("Frame")
-        checkboxFrame.Size = UDim2.new(1, -20, 0, 25)
-        checkboxFrame.Position = UDim2.new(0, 10, 0, 45)
-        checkboxFrame.BackgroundTransparency = 1
-        checkboxFrame.Parent = section
+        criarCheckbox(triggerSection, "Enabled", yPos); yPos = yPos + 25
+        criarCheckbox(triggerSection, "On Sight", yPos); yPos = yPos + 25
+        criarCheckbox(triggerSection, "On Crosshair", yPos); yPos = yPos + 25
+        yPos = yPos + 5
         
-        local checkboxLabel = Instance.new("TextLabel")
-        checkboxLabel.Text = "Enabled"
-        checkboxLabel.Size = UDim2.new(1, -25, 1, 0)
-        checkboxLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-        checkboxLabel.Font = Enum.Font.Gotham
-        checkboxLabel.TextSize = 11
-        checkboxLabel.TextXAlignment = Enum.TextXAlignment.Left
-        checkboxLabel.BackgroundTransparency = 1
-        checkboxLabel.Parent = checkboxFrame
+        local delaySlider = criarSlider(triggerSection, "Delay (ms)", yPos, 0, 500, 50); yPos = yPos + 45
         
-        local checkbox = Instance.new("TextButton")
-        checkbox.Size = UDim2.new(0, 16, 0, 16)
-        checkbox.Position = UDim2.new(1, -18, 0.5, -8)
-        checkbox.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        checkbox.Text = ""
-        checkbox.Parent = checkboxFrame
+        criarSelector(triggerSection, "Mode", yPos, {"Instant", "Delay", "Hold"})
         
-        local checkCorner = Instance.new("UICorner")
-        checkCorner.CornerRadius = UDim.new(0, 3)
-        checkCorner.Parent = checkbox
+        -- SEÇÃO 3: EXTRA (direita)
+        local extraSection = criarSecao(combatPage, "EXTRA", 420)
+        yPos = 45
         
-        -- OUTRAS PÁGINAS
+        criarCheckbox(extraSection, "Auto Prediction", yPos); yPos = yPos + 25
+        criarCheckbox(extraSection, "Dynamic FOV", yPos); yPos = yPos + 25
+        criarCheckbox(extraSection, "Show FOV Circle", yPos); yPos = yPos + 25
+        criarCheckbox(extraSection, "Auto Shoot", yPos); yPos = yPos + 25
+        yPos = yPos + 5
+        
+        local distanceSlider = criarSlider(extraSection, "Max Distance", yPos, 100, 5000, 1000); yPos = yPos + 45
+        
+        criarSelector(extraSection, "Target Mode", yPos, {"Closest", "Lowest HP", "Crosshair"})
+        
+        -- OUTRAS PÁGINAS (vazias por enquanto)
         local otherPages = {"VISUALS", "MOVEMENT", "MISC"}
         for _, name in ipairs(otherPages) do
             local page = Instance.new("Frame")
@@ -211,7 +346,7 @@ local function criarUI(config, services)
             label.Size = UDim2.new(1, 0, 1, 0)
             label.TextColor3 = Color3.fromRGB(150, 150, 150)
             label.Font = Enum.Font.Gotham
-            label.TextSize = 18
+            label.TextSize = 24
             label.BackgroundTransparency = 1
             label.Parent = page
             
@@ -278,6 +413,7 @@ local function criarUI(config, services)
         self:ShowPage("COMBAT")
         
         print("✅ UI do Malignant inicializada!")
+        print("📌 Página COMBAT com 3 seções: Aimbot, Triggerbot e Extra")
     end
 
     function ui:Toggle()
@@ -289,7 +425,4 @@ local function criarUI(config, services)
     return ui
 end
 
--- A função principal que será chamada pelo loader
-return function(config, services)
-    return criarUI(config, services)
-end
+return criarUI
